@@ -95,6 +95,15 @@ inline bool read_json(
       material->km = parse_Vector3d(jmat["km"]);
       material->phong_exponent = jmat["phong_exponent"];
       materials[name] = material;
+
+      // Refraction stuff!
+      if (jmat.find("eta") != jmat.end()) {
+        material->refractive_index = jmat["eta"];
+        material->opacity = parse_Vector3d(jmat["opacity"]);
+      } else {
+        material->refractive_index = -1.0;
+        material->opacity = Eigen::Vector3d(1,1,1);
+      }
     }
   };
   parse_materials(j["materials"],materials);

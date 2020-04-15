@@ -10,6 +10,8 @@ struct Ray
   // non-unit length so that origin+t*direction lands on a special point when
   // t=1.)
   Eigen::Vector3d direction;
+  // The refractive index of the medium which the ray is travelling through
+  double cur_medium_refractive_index;
 };
 
 #endif
