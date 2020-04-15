@@ -10,41 +10,6 @@ typedef struct caustic_point {
 	Eigen::Vector3d pos, rgb;
 } LightPoint;
 
-// Shoot a ray into a lit scene and collect color information.
-//
-// Inputs:
-//   ray  ray along which to search
-//   min_t  minimum t value to consider (for viewing rays, this is typically at
-//     least the _parametric_ distance of the image plane to the camera)
-//   objects  list of objects (shapes) in the scene
-//   lights  list of lights in the scene
-//   num_recursive_calls  how many times has raycolor been called already
-// Outputs:
-//   rgb  collected color 
-// Returns true iff a hit was found
-bool raycolor(
-	const Ray& ray,
-	const double min_t,
-	const std::vector< std::shared_ptr<Object> >& objects,
-	const std::vector< std::shared_ptr<Light> >& lights,
-	const int num_recursive_calls,
-	Eigen::Vector3d& rgb);
-
-/*
-Sets up a light map for caustics
-http://www.follick.ca/rt/
-
-Inputs: Mostly the same as raycolour, with the addition of ray_rgb so we may know the colour of the light ray.
-Outputs: light_points, the "light map" which is to be passed into a KDTree for range checking after.
-*/
-void cast_light(
-	const Ray& ray,
-	const Eigen::Vector3d ray_rgb,
-	const double min_t,
-	const std::vector< std::shared_ptr<Object> >& objects,
-	const int num_recursive_calls,
-	std::vector<LightPoint>& light_points);
-
 const int MAX_POINTS_IN_LEAF = 8;
 const double infinity = std::numeric_limits<double>::infinity();
 
@@ -174,5 +139,41 @@ public:
 		}
 	}
 };
+
+// Shoot a ray into a lit scene and collect color information.
+//
+// Inputs:
+//   ray  ray along which to search
+//   min_t  minimum t value to consider (for viewing rays, this is typically at
+//     least the _parametric_ distance of the image plane to the camera)
+//   objects  list of objects (shapes) in the scene
+//   lights  list of lights in the scene
+//   num_recursive_calls  how many times has raycolor been called already
+// Outputs:
+//   rgb  collected color 
+// Returns true iff a hit was found
+bool raycolor(
+	const Ray& ray,
+	const double min_t,
+	const std::vector< std::shared_ptr<Object> >& objects,
+	const std::vector< std::shared_ptr<Light> >& lights,
+	const int num_recursive_calls,
+	const std::shared_ptr<KDTree> light_map_tree,
+	Eigen::Vector3d& rgb);
+
+/*
+Sets up a light map for caustics
+http://www.follick.ca/rt/
+
+Inputs: Mostly the same as raycolour, with the addition of ray_rgb so we may know the colour of the light ray.
+Outputs: light_points, the "light map" which is to be passed into a KDTree for range checking after.
+*/
+void cast_light(
+	const Ray& ray,
+	const Eigen::Vector3d ray_rgb,
+	const double min_t,
+	const std::vector< std::shared_ptr<Object> >& objects,
+	const int num_recursive_calls,
+	std::vector<LightPoint>& light_points);
 
 #endif

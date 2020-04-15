@@ -55,6 +55,7 @@ bool raycolor(
 	const std::vector< std::shared_ptr<Object> >& objects,
 	const std::vector< std::shared_ptr<Light> >& lights,
 	const int num_recursive_calls,
+	const std::shared_ptr<KDTree> light_map_tree,
 	Eigen::Vector3d& rgb)
 {
 	int hit_id;
@@ -93,7 +94,7 @@ bool raycolor(
 					reflect_ray.origin = ray.origin + (t * ray.direction);
 					reflect_ray.direction = reflect(ray.direction, n);
 					reflect_ray.cur_medium_refractive_index = eta1;
-					if (raycolor(reflect_ray, fudge, objects, lights, num_recursive_calls + 1, reflect_rgb)) {
+					if (raycolor(reflect_ray, fudge, objects, lights, num_recursive_calls + 1, light_map_tree, reflect_rgb)) {
 						for (int i = 0; i < 3; i++) {
 							rgb[i] += reflect_rgb[i] * R * objects[hit_id]->material->km[i];
 						}
@@ -106,7 +107,7 @@ bool raycolor(
 					refract_ray.origin = ray.origin + (t * ray.direction);
 					refract_ray.direction = refract(ray.direction, n, eta1, eta2);
 					refract_ray.cur_medium_refractive_index = eta2;
-					if (raycolor(refract_ray, fudge, objects, lights, num_recursive_calls + 1, refract_rgb)) {
+					if (raycolor(refract_ray, fudge, objects, lights, num_recursive_calls + 1, light_map_tree, refract_rgb)) {
 						for (int i = 0; i < 3; i++) {
 							rgb[i] += refract_rgb[i] * T * (1.0 - objects[hit_id]->material->opacity[i]);
 						}
@@ -119,7 +120,7 @@ bool raycolor(
 				Ray reflect_ray;
 				reflect_ray.origin = ray.origin + (t * ray.direction);
 				reflect_ray.direction = reflect(ray.direction, n);
-				if (raycolor(reflect_ray, fudge, objects, lights, num_recursive_calls + 1, reflect_rgb)) {
+				if (raycolor(reflect_ray, fudge, objects, lights, num_recursive_calls + 1, light_map_tree, reflect_rgb)) {
 					for (int i = 0; i < 3; i++) {
 						rgb[i] += reflect_rgb[i] * objects[hit_id]->material->km[i];
 					}

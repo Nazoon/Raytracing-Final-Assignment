@@ -18,36 +18,13 @@
 const int rays_per_dim = 100;
 const double min_t = 1.0;
 
-int main(int argc, char* argv[])
-{
-
-	Eigen::Vector3d move_direction(0.05, 0.05, 0.0);
-	int num_frames = 180;
-
-	Camera camera;
-	std::vector< std::shared_ptr<Object> > objects;
-	std::vector< std::shared_ptr<Light> > lights;
-	// Read a camera and scene description from given .json file
-	std::string json_file = argv[1];
-	int width = atoi(argv[2]);
-	int height = atoi(argv[3]);
-	read_json(
-		json_file,
-		camera,
-		objects,
-		lights);
-
-	Eigen::Vector3d min(infinity, infinity, infinity);
-	Eigen::Vector3d max = -min;
-	// Setting up bounding box for scene
-	for (std::shared_ptr<Object> o : objects) {
-		Eigen::Vector3d obj_min, obj_max;
-		o->bounding_corners(obj_min, obj_max);
-		insert_point_into_box(min, max, obj_min);
-		insert_point_into_box(min, max, obj_max);
-	}
-	// Setting up light map for scene
-	std::vector<LightPoint> light_map = std::vector<LightPoint>();
+std::vector<LightPoint> setup_light_map(
+	std::vector< std::shared_ptr<Object> > objects,
+	std::vector< std::shared_ptr<Light> > lights,
+	Eigen::Vector3d min,
+	Eigen::Vector3d max,
+	std::vector<LightPoint>& light_map
+) {
 	Ray light_ray;
 	Eigen::Vector3d ray_target;
 	for (std::shared_ptr<Light> l : lights) {
@@ -64,14 +41,52 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
+}
 
+int main(int argc, char* argv[])
+{
 
-	std::vector<unsigned char> rgb_image(3 * width * height);
+	Eigen::Vector3d move_direction(0.05, 0.05, 0.0);
+	int num_frames = 180;
+	Camera camera;
+	std::vector< std::shared_ptr<Object> > objects;
+	std::vector< std::shared_ptr<Light> > lights;
+
+	// Read a camera and scene description from given .json file
+	std::string json_file = argv[1];
+	int width = atoi(argv[2]);
+	int height = atoi(argv[3]);
+	read_json(
+		json_file,
+		camera,
+		objects,
+		lights);
+
+	// Setting up bounding box for scene
+	Eigen::Vector3d min(infinity, infinity, infinity);
+	Eigen::Vector3d max = -min;
+	for (std::shared_ptr<Object> o : objects) {
+		Eigen::Vector3d obj_min, obj_max;
+		o->bounding_corners(obj_min, obj_max);
+		insert_point_into_box(min, max, obj_min);
+		insert_point_into_box(min, max, obj_max);
+	}
+	// Setting up light map for scene
+	std::vector<LightPoint> light_map = std::vector<LightPoint>();
+	setup_light_map(objects, lights, min, max, light_map);
+
+	// Turning light map into KD tree
+	std::shared_ptr<KDTree> light_map_tree = std::shared_ptr<KDTree>(new KDTree(light_map));
+
+	// Figuring out names for each frame so that they are processed in alphabetical order
 	std::vector<std::string> names;
 	for (int i = 0; i < num_frames; i++) {
 		names.emplace_back("rgb" + std::to_string(i));
 	}
 	std::sort(names.begin(), names.end());
+
+	// Rendering each frame
+	std::vector<unsigned char> rgb_image(3 * width * height);
 	for (int frame = 0; frame < num_frames; frame++) {
 		// For each pixel (i,j)
 		for (unsigned i = 0; i < height; ++i)
@@ -86,7 +101,7 @@ int main(int argc, char* argv[])
 				viewing_ray(camera, i, j, width, height, ray);
 
 				// Shoot ray and collect color
-				raycolor(ray, min_t, objects, lights, 0, rgb);
+				raycolor(ray, min_t, objects, lights, 0, light_map_tree, rgb);
 
 				// Write double precision color into image
 				auto clamp = [](double s) { return std::max(std::min(s, 1.0), 0.0); };
