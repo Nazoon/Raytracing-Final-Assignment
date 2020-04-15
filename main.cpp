@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <cstdlib> 
 
+const int rays_per_dim = 100;
+const double min_t = 1.0;
 
 int main(int argc, char* argv[])
 {
@@ -34,6 +36,36 @@ int main(int argc, char* argv[])
 		camera,
 		objects,
 		lights);
+
+	Eigen::Vector3d min(infinity, infinity, infinity);
+	Eigen::Vector3d max = -min;
+	// Setting up bounding box for scene
+	for (std::shared_ptr<Object> o : objects) {
+		Eigen::Vector3d obj_min, obj_max;
+		o->bounding_corners(obj_min, obj_max);
+		insert_point_into_box(min, max, obj_min);
+		insert_point_into_box(min, max, obj_max);
+	}
+	// Setting up light map for scene
+	std::vector<LightPoint> light_map = std::vector<LightPoint>();
+	Ray light_ray;
+	Eigen::Vector3d ray_target;
+	for (std::shared_ptr<Light> l : lights) {
+		for (int x = 0; x < rays_per_dim; x++) {
+			for (int y = 0; x < rays_per_dim; x++) {
+				for (int z = 0; x < rays_per_dim; x++) {
+					ray_target[0] = ((max[0] - min[0]) / rays_per_dim) * x + min[0];
+					ray_target[1] = ((max[1] - min[1]) / rays_per_dim) * y + min[1];
+					ray_target[2] = ((max[2] - min[2]) / rays_per_dim) * z + min[2];
+
+					light_ray = l->ray_to_target(ray_target);
+					cast_light(light_ray, l->I, min_t, objects, 0, light_map);
+				}
+			}
+		}
+	}
+
+
 	std::vector<unsigned char> rgb_image(3 * width * height);
 	std::vector<std::string> names;
 	for (int i = 0; i < num_frames; i++) {
@@ -54,7 +86,7 @@ int main(int argc, char* argv[])
 				viewing_ray(camera, i, j, width, height, ray);
 
 				// Shoot ray and collect color
-				raycolor(ray, 1.0, objects, lights, 0, rgb);
+				raycolor(ray, min_t, objects, lights, 0, rgb);
 
 				// Write double precision color into image
 				auto clamp = [](double s) { return std::max(std::min(s, 1.0), 0.0); };

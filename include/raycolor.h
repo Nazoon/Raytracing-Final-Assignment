@@ -6,6 +6,10 @@
 #include <Eigen/Core>
 #include <vector>
 
+typedef struct caustic_point {
+	Eigen::Vector3d pos, rgb;
+} LightPoint;
+
 // Shoot a ray into a lit scene and collect color information.
 //
 // Inputs:
@@ -19,33 +23,41 @@
 //   rgb  collected color 
 // Returns true iff a hit was found
 bool raycolor(
-  const Ray & ray, 
-  const double min_t,
-  const std::vector< std::shared_ptr<Object> > & objects,
-  const std::vector< std::shared_ptr<Light> > & lights,
-  const int num_recursive_calls,
-  Eigen::Vector3d & rgb);
+	const Ray& ray,
+	const double min_t,
+	const std::vector< std::shared_ptr<Object> >& objects,
+	const std::vector< std::shared_ptr<Light> >& lights,
+	const int num_recursive_calls,
+	Eigen::Vector3d& rgb);
 
-typedef struct caustic_point {
-	Eigen::Vector3d pos, rgb;
-} LightPoint;
+/*
+Sets up a light map for caustics
+http://www.follick.ca/rt/
+
+Inputs: Mostly the same as raycolour, with the addition of ray_rgb so we may know the colour of the light ray.
+Outputs: light_points, the "light map" which is to be passed into a KDTree for range checking after.
+*/
+void cast_light(
+	const Ray& ray,
+	const Eigen::Vector3d ray_rgb,
+	const double min_t,
+	const std::vector< std::shared_ptr<Object> >& objects,
+	const int num_recursive_calls,
+	std::vector<LightPoint>& light_points);
 
 const int MAX_POINTS_IN_LEAF = 8;
 const double infinity = std::numeric_limits<double>::infinity();
 
+/*
+Given the min and max corners of an AABB, insert another point into it.
+*/
+void insert_point_into_box(
+	Eigen::Vector3d& min,
+	Eigen::Vector3d& max,
+	Eigen::Vector3d pos);
+
 class KDTree {
 private:
-
-	void insert_point_into_box(
-		Eigen::Vector3d& min, 
-		Eigen::Vector3d max, 
-		Eigen::Vector3d pos) 
-	{
-		for (int d = 0; d < 3; d++) {
-			min[d] = pos[d] < min[d] ? pos[d] : min[d];
-			max[d] = pos[d] > max[d] ? pos[d] : max[d];
-		}
-	}
 
 	bool ranges_overlap(double a1, double a2, double b1, double b2) {
 		return
@@ -59,7 +71,7 @@ private:
 		Eigen::Vector3d center,
 		double radius,
 		Eigen::Vector3d min,
-		Eigen::Vector3d max) 
+		Eigen::Vector3d max)
 	{
 		Eigen::Vector3d range_min(center[0] - radius, center[1] - radius, center[2] - radius);
 		Eigen::Vector3d range_max(center[0] + radius, center[1] + radius, center[2] + radius);

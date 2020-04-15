@@ -206,3 +206,17 @@ void cast_light(
 		}
 	}
 }
+
+/*
+Given the min and max corners of an AABB, insert another point into it.
+*/
+void insert_point_into_box(
+	Eigen::Vector3d& min,
+	Eigen::Vector3d& max,
+	Eigen::Vector3d pos)
+{
+	for (int d = 0; d < 3; d++) {
+		min[d] = pos[d] < min[d] ? pos[d] : min[d];
+		max[d] = pos[d] > max[d] ? pos[d] : max[d];
+	}
+}

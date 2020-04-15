@@ -8,3 +8,11 @@ void DirectionalLight::direction(
 	max_t = std::numeric_limits<double>::infinity();
 }
 
+Ray DirectionalLight::ray_to_target(const Eigen::Vector3d q) const {
+	Ray r;
+	double max_t;
+	this->direction(q, r.direction, max_t);
+	r.origin = q + r.direction;
+	r.direction *= -1;
+	return r;
+}
