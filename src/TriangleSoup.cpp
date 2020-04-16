@@ -9,8 +9,9 @@ bool TriangleSoup::intersect(
 	return first_hit(ray, min_t, triangles, hit_id, t, n);
 }
 
-void TriangleSoup::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
+bool TriangleSoup::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
 	for (int i = 0; i < this->triangles.size(); i++) {
 		this->triangles[i]->bounding_corners(min, max);
 	}
+	return true;
 }

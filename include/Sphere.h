@@ -22,7 +22,7 @@ class Sphere : public Object
     bool intersect(
       const Ray & ray, const double min_t, double & t, Eigen::Vector3d & n) const;
 
-	void bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const;
+	bool bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const;
 };
 
 #endif

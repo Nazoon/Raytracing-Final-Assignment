@@ -22,10 +22,6 @@ bool Plane::intersect(
 	return false;
 }
 
-void Plane::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
-	double infinity = std::numeric_limits<double>::infinity();
-	for (int i = 0; i < 3; i++) {
-		min[i] = infinity;
-		max[i] = -infinity;
-	}
+bool Plane::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
+	return false;
 }

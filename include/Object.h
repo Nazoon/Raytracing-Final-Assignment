@@ -29,7 +29,7 @@ class Object
 	/*
 	Find the corners of the smallest axis-aligned box which would fit this object
 	*/
-	virtual void bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const = 0;
+	virtual bool bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const = 0;
 };
 
 #endif

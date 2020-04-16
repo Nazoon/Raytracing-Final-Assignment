@@ -4,14 +4,14 @@
 #include "Object.h"
 #include "Light.h"
 #include <Eigen/Core>
+#include <stdio.h>
+#include <iostream>
 #include <vector>
+#include <limits>
 
 typedef struct caustic_point {
 	Eigen::Vector3d pos, rgb;
 } LightPoint;
-
-const int MAX_POINTS_IN_LEAF = 8;
-const double infinity = std::numeric_limits<double>::infinity();
 
 /*
 Given the min and max corners of an AABB, insert another point into it.
@@ -20,6 +20,13 @@ void insert_point_into_box(
 	Eigen::Vector3d& min,
 	Eigen::Vector3d& max,
 	Eigen::Vector3d pos);
+
+const int MAX_POINTS_IN_LEAF = 2;
+const double infinity = std::numeric_limits<double>::infinity();
+const double light_map_range = 0.2;
+
+const int max_num_recursive_calls = 50;
+const double fudge = 0.000001;
 
 class KDTree {
 private:
@@ -45,6 +52,10 @@ private:
 				return false;
 		}
 		return true;
+	}
+
+	std::function<bool(LightPoint, LightPoint)> compare_points_func(int dim) {
+		return [dim](LightPoint a, LightPoint b) {return a.pos[dim] > b.pos[dim]; };
 	}
 
 public:
@@ -86,10 +97,11 @@ public:
 			}
 
 			// Split points down longest dimension into subtrees
-			double mid = longest_dim_length / 2.0 + min[longest_dim];
+			std::sort(points.begin(), points.end(), compare_points_func(longest_dim));
+			//printf("n=%d, dim=%d, dim_length=%f, max[dim]=%f, min[dim]=%f...\n", (int)points.size(), longest_dim + 1, longest_dim_length, max[longest_dim], min[longest_dim]);
 			std::vector<LightPoint> left_vec, right_vec;
 			for (int i = 0; i < points.size(); i++) {
-				if (points[i].pos[longest_dim] < mid) {
+				if (i <= points.size() / 2) {
 					left_vec.emplace_back(points[i]);
 				}
 				else {
@@ -116,6 +128,8 @@ public:
 		std::vector<LightPoint>& points,
 		std::vector<double>& sdists)
 	{
+		//std::cout << "min:" << min << std::endl << "max:" << max << std::endl;
+
 		// Return immediately if this box is not in the range
 		if (!box_in_range(center, radius, min, max)) {
 			return;
@@ -137,6 +151,23 @@ public:
 			left->get_points_in_range(center, radius, points, sdists);
 			right->get_points_in_range(center, radius, points, sdists);
 		}
+	}
+
+	int max_depth() {
+		if (light_points.size() > 0)
+			return 0;
+		return 1 + std::max(left->max_depth(), right->max_depth());
+	}
+
+	int num_points() {
+		int n = light_points.size();
+		if (left != NULL) {
+			n += left->num_points();
+		}
+		if (right != NULL) {
+			n += right->num_points();
+		}
+		return n;
 	}
 };
 

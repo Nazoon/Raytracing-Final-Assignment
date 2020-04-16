@@ -25,7 +25,7 @@ class Plane : public Object
   /*
   Infinite corners. Big bad.
   */
-  void bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const;
+  bool bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const;
 };
 
 #endif

@@ -32,7 +32,7 @@ bool Triangle::intersect(
 	return false;
 }
 
-void Triangle::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
+bool Triangle::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
 	Eigen::Vector3d p0, p1, p2;
 	std::tie(p0, p1, p2) = corners;
 	std::vector<Eigen::Vector3d> points = { p0, p1, p2 };
@@ -42,5 +42,6 @@ void Triangle::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) cons
 			max[dim] = points[p][dim] > max[dim] ? points[p][dim] : max[dim];
 		}
 	}
+	return true;
 }
 

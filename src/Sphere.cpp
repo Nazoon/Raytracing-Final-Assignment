@@ -24,9 +24,10 @@ bool Sphere::intersect(
 	return false;
 }
 
-void Sphere::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
+bool Sphere::bounding_corners(Eigen::Vector3d& min, Eigen::Vector3d& max) const {
 	for (int i = 0; i < 3; i++) {
 		min[i] = this->center[i] - this->radius;
 		max[i] = this->center[i] + this->radius;
 	}
+	return true;
 }
