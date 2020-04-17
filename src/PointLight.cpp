@@ -14,5 +14,6 @@ Ray PointLight::ray_to_target(const Eigen::Vector3d q) const {
 	this->direction(q, r.direction, max_t);
 	r.origin = this->p;
 	r.direction *= -1;
+	r.cur_medium_refractive_index = 1.0;
 	return r;
 }

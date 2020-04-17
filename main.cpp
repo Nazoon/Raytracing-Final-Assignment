@@ -16,8 +16,11 @@
 #include <cstdlib>
 #include <random>
 
-const int rays_per_dim = 120;
-const double min_t = 0.1;
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+const int rays_per_dim = 50;
+const double min_t = 0.001;
 const double skew = 0.01;
 
 void setup_light_map(
@@ -32,7 +35,7 @@ void setup_light_map(
 	// https://stackoverflow.com/questions/1340729/how-do-you-generate-a-random-double-uniformly-distributed-between-0-and-1-from-c/1340762
 	std::random_device rd;
 	std::mt19937 e2(rd());
-	std::uniform_real_distribution<> dist(-skew, skew);
+	std::uniform_real_distribution<> dist(-1, 1);
 
 	Ray light_ray;
 	Eigen::Vector3d ray_target;
@@ -49,17 +52,59 @@ void setup_light_map(
 					ray_target[2] = ((max[2] - min[2]) / rays_per_dim) * z + min[2];
 
 					// Random skewing
-					for (int i = 0; i < 3; i++)
-						ray_target[i] += dist(e2);
+					for (int i = 0; i < 3; i++) {
+						double off = dist(e2);
+						//printf("%f\n", off);
+						ray_target[i] += off * skew;
+					}
+
+					//printf("--- casting ray (%d, %d, %d)...\n", x, y, z);
 
 					light_ray = l->ray_to_target(ray_target);
 					//cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim * rays_per_dim), min_t, objects, 0, light_map);
-					cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim) * 25, min_t, objects, 0, light_map);
-					//cast_light(light_ray, l->I / (rays_per_dim), min_t, objects, 0, light_map);
+					//cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim), min_t, objects, 0, light_map);
+					cast_light(light_ray, l->I / (rays_per_dim), min_t, objects, 0, light_map);
 					//cast_light(light_ray, l->I , min_t, objects, 0, light_map);
 				}
 			}
 		}
+	}
+}
+
+const double frames_per_rotation = 360;
+const double rad_per_frame = (M_PI * 2) / frames_per_rotation;
+const double radius = 1.5;
+const int bounces_per_rotation = 3;
+const double max_height = 0.5;
+
+Eigen::Vector3d sphere_pos(
+	double rad
+) {
+	Eigen::Vector3d pos(0, 0, 0);
+
+	// Rotation around the origin
+	pos[0] = radius * std::cos(rad);
+	pos[2] = radius * std::sin(rad);
+
+	// Bouncing up and down :)
+	pos[1] = std::abs((max_height + 0.5) * std::sin(rad * bounces_per_rotation)) - 0.5;
+
+	return pos;
+}
+
+/*
+For the dancing spheres
+*/
+void get_sphere_positions(
+	int frame,
+	Eigen::MatrixXd& ps) {
+
+	int num_spheres = ps.rows();
+	double rad_per_sphere = (M_PI * 2) / num_spheres;
+	for (int i = 0; i < num_spheres; i++) {
+		double rad = frame * rad_per_frame;
+		rad += i * rad_per_sphere;
+		ps.row(i) = sphere_pos(rad);
 	}
 }
 
@@ -89,15 +134,19 @@ int main(int argc, char* argv[])
 	}
 	std::sort(names.begin(), names.end());
 
-	std::vector< std::shared_ptr<Object> > new_objects;
-	new_objects.emplace_back(objects[0]);
-	new_objects.emplace_back(objects[1]);
-	objects = new_objects;
-
 	// Rendering each frame
 	std::vector<unsigned char> rgb_image(3 * width * height);
 	for (int frame = 0; frame < num_frames; frame++) {
-		printf("- Frame %d/%d...\n", frame, num_frames);
+		//printf("- Frame %d/%d...\n", frame, num_frames);
+
+		// Positioning spheres
+		int num_spheres = 6;
+		Eigen::MatrixXd sphere_pos;
+		sphere_pos.resize(num_spheres, 3);
+		get_sphere_positions(frame, sphere_pos);
+		for (int i = 0; i < num_spheres; i++) {
+			objects[i]->center = sphere_pos.row(i);
+		}
 
 		// Setting up bounding box for scene
 		Eigen::Vector3d min(infinity, infinity, infinity);
@@ -109,31 +158,29 @@ int main(int argc, char* argv[])
 				insert_point_into_box(min, max, obj_max);
 			}
 		}
-		// Expanding bounding box just a bit
-		for (int i = 0; i < 3; i++) {
-			min[i] -= 0.1;
-			max[i] += 0.1;
-		}
+
 		// Setting up light map for scene
-		std::vector<LightPoint> light_map = std::vector<LightPoint>();
+		std::vector<LightPoint> light_map = std::vector<LightPoint>();/*
+		printf("-- Setting up light map...\n");*/
 		setup_light_map(objects, lights, min, max, light_map);
-		printf("-- Light map done.\n");
-		printf("--- # light rays cast = %d\n", rays_per_dim * rays_per_dim * rays_per_dim);
-		printf("--- # caustic points  = %d\n", (int)light_map.size());
+		//printf("--- # light rays cast = %d\n", rays_per_dim * rays_per_dim * rays_per_dim * (int)lights.size());
+		//printf("--- # caustic points  = %d\n", (int)light_map.size());
 
 		// Turning light map into KD tree
-		std::shared_ptr<KDTree> light_map_tree = std::shared_ptr<KDTree>(new KDTree(light_map));
-		printf("-- KD tree done.\n");
+		//printf("-- Constructing KD tree...\n");
+		std::shared_ptr<KDTree> light_map_tree = std::shared_ptr<KDTree>(new KDTree(light_map));/*
 		printf("--- # caustic points  = %d\n", light_map_tree->num_points());
-		printf("--- max depth = %d\n", light_map_tree->max_depth());
+		printf("--- max depth = %d\n", light_map_tree->max_depth());*/
 
 		assert(light_map.size() == light_map_tree->num_points());
 
-		// For each pixel (i,j)
+		//printf("-- Drawing frame...\n");
 		for (unsigned i = 0; i < height; ++i)
 		{
 			for (unsigned j = 0; j < width; ++j)
 			{
+				//printf("--- rendering (%d, %d)...\n", i, j);
+
 				// Set background color
 				Eigen::Vector3d rgb(0, 0, 0);
 
@@ -154,6 +201,6 @@ int main(int argc, char* argv[])
 		}
 		write_ppm("frames/" + names[frame] + ".ppm", rgb_image, width, height, 3);
 		objects[0]->center += move_direction;
-		printf("-- Frame done.\n");
+		//printf("-- Frame done.\n");
 	}
 }

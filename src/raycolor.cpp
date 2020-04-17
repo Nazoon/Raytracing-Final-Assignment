@@ -35,6 +35,8 @@ void find_transmittance_and_reflectance(
 		bool total_internal_reflection = sin_i > (eta2 / eta1);
 		if (total_internal_reflection) {
 			R = 1.0;
+			T = 0.0;
+			return;
 		}
 		else {
 			double x = 1.0 - cos_t;
@@ -61,9 +63,12 @@ Eigen::Vector3d caustics_at_point(
 	std::vector<LightPoint> light_points;
 	std::vector<double> sdists;
 	light_map_tree->get_points_in_range(center, light_map_range, light_points, sdists);
+	double max_sdist = light_map_range * light_map_range;
 	Eigen::Vector3d caustic_rgb(0, 0, 0);
 	for (int i = 0; i < sdists.size(); i++) {
-		caustic_rgb += light_points[i].rgb / (sdists[i] + 0.9);
+		double dist_factor = ((max_sdist - sdists[i]) / (max_sdist));
+		if (dist_factor < 0) dist_factor = 0;
+		caustic_rgb += light_points[i].rgb * dist_factor;
 	}
 	return caustic_rgb;
 }
@@ -177,16 +182,21 @@ void cast_light(
 		Eigen::Vector3d n;
 		if (first_hit(ray, min_t, objects, hit_id, t, n)) {
 
-			if (objects[hit_id]->material->refractive_index != -1) {
+			if (objects[hit_id]->material->refractive_index != 1) {
 				// Refractive object, split light ray into two new ones based on transmittance and reflectance
 
 				// Checking for exiting a translucent material
 				double eta1 = ray.cur_medium_refractive_index;
-				double eta2 = objects[hit_id]->material->refractive_index;
-				if (eta1 != -1 && eta1 == eta2) {
+				double eta2;
+				if (eta1 == 1.0 || eta1 == -1.0) {
+					eta2 = objects[hit_id]->material->refractive_index;
+					//printf("entering...\n");
+				}
+				else {
 					// We assume the ray to be exiting the material into air.
 					// This means we are not allowed to have overlapping translucent materials.
 					eta2 = 1.0;
+					//printf("n1 = %f n2 = %f\n", eta1, eta2);
 				}
 
 				// Setting reflectance and transmittance variables
@@ -197,15 +207,16 @@ void cast_light(
 				// Relfected light
 				if (R > 0.0) {
 					Ray reflect_ray;
-					reflect_ray.origin = ray.origin + (t * ray.direction);
+					reflect_ray.origin = ray.origin + ((t + fudge) * ray.direction);
 					reflect_ray.direction = reflect(ray.direction, n);
 					reflect_ray.cur_medium_refractive_index = eta1;
 					cast_light(reflect_ray, ray_rgb * R, min_t, objects, num_recursive_calls + 1, light_points);
 				}
 				// Refracted light
 				if (T > 0.0) {
+					//printf("refracting...\n");
 					Ray refract_ray;
-					refract_ray.origin = ray.origin + (t * ray.direction);
+					refract_ray.origin = ray.origin + ((t + fudge) * ray.direction);
 					refract_ray.direction = refract(ray.direction, n, eta1, eta2);
 					refract_ray.cur_medium_refractive_index = eta2;
 					cast_light(refract_ray, ray_rgb * T, min_t, objects, num_recursive_calls + 1, light_points);
@@ -229,10 +240,10 @@ void cast_light(
 				}
 
 				// Not refractive, reflect some light into a new light ray
-				//Eigen::Vector3d new_ray_rgb;
-				//for (int i = 0; i < 3; i++) {
-				//	new_ray_rgb[i] = ray_rgb[i] * objects[hit_id]->material->km[i];
-				//}
+				Eigen::Vector3d new_ray_rgb;
+				for (int i = 0; i < 3; i++) {
+					new_ray_rgb[i] = ray_rgb[i] * objects[hit_id]->material->km[i];
+				}
 				//Ray reflect_ray;
 				//reflect_ray.origin = ray.origin + (t * ray.direction);
 				//reflect_ray.direction = reflect(ray.direction, n);

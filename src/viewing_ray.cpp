@@ -23,6 +23,7 @@ void viewing_ray(
 
 	ray.origin = camera.e;
 	ray.direction = (u + v + neg_d);
+	ray.cur_medium_refractive_index = 1.0;
 
 	// Assuming the ray starts in a vacuum
 	ray.cur_medium_refractive_index = 1.0;

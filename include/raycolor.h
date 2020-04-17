@@ -23,10 +23,10 @@ void insert_point_into_box(
 
 const int MAX_POINTS_IN_LEAF = 2;
 const double infinity = std::numeric_limits<double>::infinity();
-const double light_map_range = 0.2;
+const double light_map_range = 0.25;
 
-const int max_num_recursive_calls = 50;
-const double fudge = 0.000001;
+const int max_num_recursive_calls = 7;
+const double fudge = 0.01;
 
 class KDTree {
 private:
@@ -55,7 +55,7 @@ private:
 	}
 
 	std::function<bool(LightPoint, LightPoint)> compare_points_func(int dim) {
-		return [dim](LightPoint a, LightPoint b) {return a.pos[dim] > b.pos[dim]; };
+		return [dim](LightPoint a, LightPoint b) {return a.pos[dim] < b.pos[dim]; };
 	}
 
 public:
@@ -98,7 +98,6 @@ public:
 
 			// Split points down longest dimension into subtrees
 			std::sort(points.begin(), points.end(), compare_points_func(longest_dim));
-			//printf("n=%d, dim=%d, dim_length=%f, max[dim]=%f, min[dim]=%f...\n", (int)points.size(), longest_dim + 1, longest_dim_length, max[longest_dim], min[longest_dim]);
 			std::vector<LightPoint> left_vec, right_vec;
 			for (int i = 0; i < points.size(); i++) {
 				if (i <= points.size() / 2) {
@@ -154,7 +153,7 @@ public:
 	}
 
 	int max_depth() {
-		if (light_points.size() > 0)
+		if (left == NULL) // Automatically means right is null as well
 			return 0;
 		return 1 + std::max(left->max_depth(), right->max_depth());
 	}

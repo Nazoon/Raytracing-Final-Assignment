@@ -41,6 +41,7 @@ inline bool read_json(
 #include <fstream>
 #include <iostream>
 #include <cassert>
+#include <limits>
 
 inline bool read_json(
   const std::string & filename, 
@@ -101,7 +102,7 @@ inline bool read_json(
         material->refractive_index = jmat["eta"];
         material->opacity = parse_Vector3d(jmat["opacity"]);
       } else {
-        material->refractive_index = -1.0;
+        material->refractive_index = 1.0;
         material->opacity = Eigen::Vector3d(1,1,1);
       }
     }
