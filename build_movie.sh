@@ -4,9 +4,13 @@ rm -rf frames
 mkdir frames
 date +"%c"
 echo "Rendering frames..."
-./raytracing $1 $2 $3
+./raytracing  ../data/my-scene.json $1 $2
 date +"%c"
-echo "Creating mp4..."
-convert -delay $4 -quality $5 frames/rgb*ppm movie.mp4
+echo "Creating gif..."
+convert -delay $3 -quality $4 frames/rgb*ppm movie.gif
+date +"%c"
+echo "Converting to mp4..."
+touch movie_log.txt
+ffmpeg -i movie.gif -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -y movie.mp4 > ./movie_log.txt
 date +"%c"
 echo "Done."

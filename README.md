@@ -8,7 +8,7 @@ I am in lecture section LEC0201.
 
 ## Usage
 
-To see this project's output, you must set up as follows:
+To see this project's output, you must first set up as follows:
 
 1. `cd` to `source/`
 2. `mkdir build-release`, then `cd build-release`
@@ -17,15 +17,17 @@ To see this project's output, you must set up as follows:
 Now, the script `build_movie.sh` has everything it needs. Use it as follows:
 
 1. `cd` to `source/` again.
-2. `sh build_movie.sh ../data/my-scene.json <width> <height> <speed> <quality>` to create the output `build-release/movie.mp4`.
+2. `sh build_movie.sh <width> <height> <speed> <quality>` to create the output `build-release/movie.mp4`.
 	* `<width>` is the desired width of the output.
 	* `<height>` is the desired height of the output.
 	* `<speed>` determines the "framerate" of the output. 4 is the recommended speed. Anything higher will add more delay per frame.
 	* `<quality>` determines the quality of `movie.mp4`. 100 is the maximum, with 70 being about medium quality.
 
-For example, you may run `sh build_movie.sh ../data/my-scene.json 1280 720 4 100` to get a high-quality 1280x720 video. This will take a while!
+For example, you may run `sh build_movie.sh 1280 720 4 100` to get a high-quality 1280x720 video. This will take a while!
 
 ## Implementation
+
+The data for the scene is found in `source/data/my-scene.json`
 
 To implement refractive translucent materials, it was a matter of:
 * Adding a refractive index and opacity to the Material struct
@@ -38,3 +40,5 @@ To implement caustics was a more interesting and difficult endeavour:
 * Implemented a range search function for the k-d tree.
 * Implement a function `cast_light` in `raycolor.cpp`, which casts a ray of light from a light source into a scene, and adds a point of caustic light wherever the ray lands as it reflects and refracts about the scene.
 * These implementation ideas were taken from an article cited in the file, but all the code is original.
+
+To create the video output, the positions of some objects were moved once per frame, and each frame was outputted to its own `.ppm` file. Then, the `convert` and `ffmpeg` commands are used to compile these indivudal frames in a `.mp4` format.
