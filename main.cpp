@@ -19,7 +19,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-const int rays_per_dim = 50;
+const int rays_per_dim = 40;
 const double min_t = 0.001;
 const double skew = 0.01;
 
@@ -62,8 +62,8 @@ void setup_light_map(
 
 					light_ray = l->ray_to_target(ray_target);
 					//cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim * rays_per_dim), min_t, objects, 0, light_map);
-					//cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim), min_t, objects, 0, light_map);
-					cast_light(light_ray, l->I / (rays_per_dim), min_t, objects, 0, light_map);
+					cast_light(light_ray, l->I / (rays_per_dim * rays_per_dim) * 4, min_t, objects, 0, light_map);
+					//cast_light(light_ray, l->I / (rays_per_dim), min_t, objects, 0, light_map);
 					//cast_light(light_ray, l->I , min_t, objects, 0, light_map);
 				}
 			}
