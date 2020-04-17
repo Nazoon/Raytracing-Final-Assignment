@@ -6,17 +6,15 @@ For my CSC418 final assignment, I augmented my existing A3 assignment solution w
 
 I am in lecture section LEC0201.
 
+## Requirements:
+
+Make sure your operating system is able to run the commands `convert` and `ffmpeg`. If not, install them before proceeding.
+
 ## Usage
 
-To see this project's output, you must first set up as follows:
+The script `build_movie.sh` handles compiling the project with `cmake` and `make`, as well as creating the actual output video. Use it as follows:
 
-1. `cd` to `source/`
-2. `mkdir build-release`, then `cd build-release`
-3. `cmake ../ -DCMAKE_BUILD_TYPE=Release`
-
-Now, the script `build_movie.sh` has everything it needs. Use it as follows:
-
-1. `cd` to `source/` again.
+1. `cd` to the `source/` directory.
 2. `sh build_movie.sh <width> <height> <speed> <quality>` to create the output `build-release/movie.mp4`.
 	* `<width>` is the desired width of the output.
 	* `<height>` is the desired height of the output.
