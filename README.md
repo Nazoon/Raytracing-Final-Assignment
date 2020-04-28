@@ -4,10 +4,6 @@
 
 For my CSC418 final assignment, I augmented my existing A3 assignment solution with refraction and caustics. I also wrote a small script to compile the many frames which my code produces into a single `mp4` file.
 
-## Lecture Section
-
-I am in lecture section LEC0201.
-
 ## Requirements:
 
 Make sure your operating system is able to run the commands `convert` and `ffmpeg`. If not, install them before proceeding.
@@ -34,7 +30,7 @@ To implement refractive translucent materials, it was a matter of:
 * Computing the direction that a refracted ray would take as it passes into a new medium. This was implemented in `raycolor.cpp`.
 	* This was taken from a paper found on the https://graphics.stanford.edu/ website, which is cited in the documentation.
 
-To implement caustics was a more interesting and difficult endeavour:
+To implement caustics (the pretty bright and dark spots of refracted light from a light source) was a more interesting and difficult endeavour:
 * Implemented a k-d tree similarly to the BVH tree found in A4.
 	* The k-d tree is used to store points of caustic light in an easily searchable way.
 * Implemented a range search function for the k-d tree.
