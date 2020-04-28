@@ -1,5 +1,7 @@
 # Raytracing Final Assignment
 
+<img src="/images/movie-medium.gif" alt="Result in gif form." align="middle">
+
 For my CSC418 final assignment, I augmented my existing A3 assignment solution with refraction and caustics. I also wrote a small script to compile the many frames which my code produces into a single `mp4` file.
 
 ## Lecture Section
