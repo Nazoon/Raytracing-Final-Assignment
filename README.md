@@ -4,7 +4,7 @@
 
 For my CSC418 final assignment, I augmented my existing A3 assignment solution with refraction and caustics. I also wrote a small script to compile the many frames which my code produces into a single `mp4` file.
 
-## Requirements:
+## Requirements
 
 Make sure your operating system is able to run the commands `convert` and `ffmpeg`. If not, install them before proceeding.
 
